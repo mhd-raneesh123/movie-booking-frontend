@@ -5,8 +5,8 @@ import Booking from './pages/Booking';
 import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Profile from './pages/Profile'; // 1. IMPORT YOUR NEW PROFILE PAGE
 
-// Create a small wrapper for the Header to use the 'useNavigate' hook
 const Header = () => {
   const navigate = useNavigate();
   const userName = localStorage.getItem('userName'); 
@@ -24,11 +24,16 @@ const Header = () => {
       </Link>
       
       <div className="flex items-center gap-6 font-medium text-gray-700">
-        <Link to="/" className="hover:text-red-600 transition">Movies</Link>
+        <Link to="/" className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">Movies</Link>
         
         {userName ? (
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 ">
+            <Link to="/profile" className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+              My Bookings
+            </Link>
+            
             <span className="text-sm">Hi, <span className="font-bold text-gray-900">{userName}</span></span>
+            
             <button 
               onClick={handleLogout}
               className="text-sm bg-gray-100 hover:bg-red-50 hover:text-red-600 px-4 py-2 rounded-lg transition"
@@ -56,10 +61,10 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/shows/:id" element={<ShowSelection />} />
             <Route path="/book/:id" element={<Booking />} />
-            {/* CHANGED PATH FROM /payment TO /checkout TO MATCH YOUR COMPONENT */}
             <Route path="/checkout" element={<Checkout />} /> 
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/profile" element={<Profile />} /> {/* 3. ROUTE IS ALREADY HERE */}
           </Routes>
         </main>
         <footer className="bg-gray-900 text-white text-center py-6">

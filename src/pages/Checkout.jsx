@@ -1,19 +1,18 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf'; //
+import axios from 'axios';
 
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  // Destructure movie, seats, and price from Booking.jsx
-  // Note: Add 'theater', 'time', and 'date' to this list if you pass them from Booking.jsx
   const { movie, selectedSeats, totalPrice, theater, time, date } = location.state || {};
   
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState('card'); 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
 
-  // PDF Generation Logic
+  // 1. PDF Generation Logic
   const generatePDF = () => {
     const doc = new jsPDF();
     
@@ -36,41 +35,59 @@ const Checkout = () => {
     doc.save(`Ticket_${movie?.title || 'Movie'}.pdf`);
   };
 
-  const handlePayment = (e) => {
+  const handlePayment = async (e) => {
     e.preventDefault();
     setIsProcessing(true);
-    setTimeout(() => {
+    const userId = localStorage.getItem('userId');
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Save to history
+      await axios.post('http://localhost:5000/api/bookings/save', {
+        userId,
+        movieTitle: movie?.title,
+        theater,
+        date,
+        time,
+        seats: selectedSeats,
+        totalPrice: totalPrice + 2
+      }); 
+
       setIsProcessing(false);
       setIsPaid(true);
-    }, 2000);
+    } catch (err) {
+      console.error("Error saving booking:", err);
+      setIsProcessing(false);
+      alert("Payment successful, but failed to record booking.");
+    }
   };
 
+  // 2. Success Screen with PDF Download Button
   if (isPaid) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[80vh] p-4 text-center">
         <div className="bg-white p-10 rounded-3xl shadow-2xl border-2 border-green-500 max-w-md">
           <div className="text-6xl mb-4">✅</div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">Payment Successful!</h2>
-          <p className="text-gray-600 mb-6">Your digital ticket is ready.</p>
+          <p className="text-gray-600 mb-6">Your ticket has been recorded in your history.</p>
           
-          <div className="bg-gray-50 p-4 rounded-xl text-left border-l-4 border-red-500 mb-6">
-            <p className="font-bold text-lg">{movie?.title}</p>
+          <div className="bg-gray-50 p-4 rounded-xl text-left border-l-4 border-red-500 mb-6 font-medium">
+            <p className="text-gray-900">{movie?.title}</p>
             <p className="text-sm text-gray-500">Seats: {selectedSeats?.join(', ')}</p>
-            <p className="text-sm text-gray-500">Method: {paymentMethod.toUpperCase()}</p>
           </div>
 
           <div className="flex flex-col gap-3">
             <button 
               onClick={generatePDF} 
-              className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition"
+              className="w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 transition shadow-md"
             >
               Download PDF Ticket
             </button>
             <button 
-              onClick={() => navigate('/')} 
-              className="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-lg hover:bg-gray-200 transition"
+              onClick={() => navigate('/profile')} 
+              className="w-full bg-gray-800 text-white font-bold py-3 rounded-lg hover:bg-black transition"
             >
-              Back to Home
+              Go to My Bookings
             </button>
           </div>
         </div>
@@ -83,36 +100,47 @@ const Checkout = () => {
       <div className="md:w-3/5">
         <h2 className="text-2xl font-bold mb-6 text-gray-800">Choose Payment Method</h2>
         
+        {/* Method Toggle Buttons */}
         <div className="flex gap-4 mb-8">
           <button 
+            type="button"
             onClick={() => setPaymentMethod('card')}
-            className={`flex-1 py-3 px-4 rounded-xl border-2 transition font-semibold ${paymentMethod === 'card' ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-200'}`}
+            className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all font-semibold ${
+              paymentMethod === 'card' ? 'border-red-500 bg-red-50 text-red-600 shadow-sm' : 'border-gray-200 text-gray-500'
+            }`}
           >
-            💳 Credit/Debit Card
+            💳 Card
           </button>
           <button 
+            type="button"
             onClick={() => setPaymentMethod('upi')}
-            className={`flex-1 py-3 px-4 rounded-xl border-2 transition font-semibold ${paymentMethod === 'upi' ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-200'}`}
+            className={`flex-1 py-3 px-4 rounded-xl border-2 transition-all font-semibold ${
+              paymentMethod === 'upi' ? 'border-red-500 bg-red-50 text-red-600 shadow-sm' : 'border-gray-200 text-gray-500'
+            }`}
           >
-            📱 UPI (GPay/PhonePe)
+            📱 UPI
           </button>
         </div>
 
         <form onSubmit={handlePayment} className="space-y-4">
           {paymentMethod === 'card' ? (
-            <div className="space-y-4 animate-fadeIn">
+            <div className="space-y-4">
               <input type="text" placeholder="Cardholder Name" className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none" required />
-              <input type="text" placeholder="Card Number (16 Digits)" className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none" required />
+              <input type="text" placeholder="Card Number" className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none" required />
               <div className="flex gap-4">
                 <input type="text" placeholder="MM/YY" className="w-1/2 p-4 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none" required />
                 <input type="password" placeholder="CVV" className="w-1/2 p-4 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none" required />
               </div>
             </div>
           ) : (
-            <div className="space-y-4 animate-fadeIn text-center">
-              <div className="bg-gray-100 p-6 rounded-xl border-2 border-dashed border-gray-300">
-                <p className="text-sm text-gray-500 mb-2">Enter your UPI ID</p>
-                <input type="text" placeholder="username@okaxis" className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-center text-lg font-mono" required />
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-6 rounded-xl border-2 border-dashed border-gray-200">
+                <input 
+                  type="text" 
+                  placeholder="username@upi" 
+                  className="w-full p-4 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-center font-mono" 
+                  required 
+                />
               </div>
             </div>
           )}
@@ -127,9 +155,10 @@ const Checkout = () => {
         <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-100 sticky top-8">
           <h3 className="text-xl font-bold mb-4 pb-2 border-b">Order Summary</h3>
           <div className="space-y-3">
-            <div className="flex justify-between"><span className="text-gray-500">Movie</span><span className="font-semibold">{movie?.title}</span></div>
-            <div className="flex justify-between"><span className="text-gray-500">Seats</span><span className="font-semibold">{selectedSeats?.join(', ')}</span></div>
-            <div className="flex justify-between"><span className="text-gray-500">Tax (GST)</span><span className="font-semibold">$2.00</span></div>
+            <div className="flex justify-between text-gray-600"><span>Movie</span><span className="font-semibold text-gray-900">{movie?.title}</span></div>
+            <div className="flex justify-between text-gray-600"><span>Theater</span><span className="font-semibold text-gray-900">{theater}</span></div>
+            <div className="flex justify-between text-gray-600"><span>Seats</span><span className="font-semibold text-gray-900">{selectedSeats?.join(', ')}</span></div>
+            <div className="flex justify-between text-gray-600"><span>Tax</span><span className="font-semibold text-gray-900">$2.00</span></div>
             <div className="border-t pt-3 flex justify-between text-2xl font-bold text-gray-900">
               <span>Total</span>
               <span>${totalPrice + 2}</span>

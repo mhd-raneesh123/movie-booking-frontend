@@ -8,9 +8,8 @@ const ShowSelection = () => {
   const movie = location.state?.movie;
 
   const [selectedDate, setSelectedDate] = useState('Today, 23 Feb');
-  const [selectedTheater, setSelectedTheater] = useState(null);
 
-  const dates = ['Today, 23 Feb', 'Tue, 24 Feb', 'Wed, 25 Feb', 'Thu, 26 Feb'];
+  const dates = ['Today, 23 Feb', 'Tue, 24 Feb', 'Wed, 25 Feb', 'Thu, 26 Feb', 'Fri 27 Feb'];
   
   const theaters = [
     { name: "PVR: Directors Cut", times: ["10:30 AM", "02:15 PM", "07:00 PM", "10:45 PM"] },
@@ -18,25 +17,51 @@ const ShowSelection = () => {
     { name: "Inox: Insignia", times: ["09:00 AM", "12:45 PM", "04:00 PM", "08:15 PM"] }
   ];
 
-const handleTimeSelect = (theaterName, timeSlot) => {
-  navigate(`/book/${id}`, { 
-    state: { 
-      movie: movie, 
-      theater: theaterName, 
-      time: timeSlot, 
-      date: selectedDate 
-    } 
-  });
-};
-if (!movie) {
-  return <div className="text-center p-20 text-xl">No movie data found. Please go back to Home.</div>;
-    }
+  const handleTimeSelect = (theaterName, timeSlot) => {
+    navigate(`/book/${id}`, { 
+      state: { 
+        movie: movie, 
+        theater: theaterName, 
+        time: timeSlot, 
+        date: selectedDate 
+      } 
+    });
+  };
+
+  if (!movie) {
+    return <div className="text-center p-20 text-xl">No movie data found. Please go back to Home.</div>;
+  }
     
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{movie?.title}</h1>
-        <p className="text-gray-500 mb-8">{movie?.genre} • English</p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{movie?.title}</h1>
+            <p className="text-gray-500">{movie?.genre} • English</p>
+          </div>
+        </div>
+
+        {/* --- NEW: MOVIE TRAILER SECTION --- */}
+        {movie?.trailerId ? (
+          <div className="mb-10">
+            <div className="rounded-2xl overflow-hidden shadow-xl aspect-video bg-black border-4 border-white">
+              <iframe
+                width="100%"
+                height="100%"
+                src={`https://www.youtube.com/embed/${movie.trailerId}`}
+                title={`${movie.title} Trailer`}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-gray-200 h-10 rounded-xl mb-10 flex items-center justify-center text-gray-500 text-sm italic">
+            Trailer currently unavailable
+          </div>
+        )}
 
         {/* Date Selector */}
         <div className="flex gap-4 mb-10 overflow-x-auto pb-2">

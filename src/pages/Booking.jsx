@@ -3,64 +3,61 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 const Booking = () => {
-  const { id } = useParams(); // Gets the movie ID from the URL
-    const navigate = useNavigate();
-    const location = useLocation();
-    const [movie, setMovie] = useState(location.state?.movie || null);
-    const {theater, time, date } = location.state || {};
-    const [selectedSeats, setSelectedSeats] = useState([]);
-  
-  // Create an array of 40 dummy seats
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [movie, setMovie] = useState(location.state?.movie || null);
+  const { theater, time, date } = location.state || {};
+  const [selectedSeats, setSelectedSeats] = useState([]);
+
   const totalSeats = Array.from({ length: 40 }, (_, i) => i + 1);
-  const ticketPrice = 15; // $15 per ticket
 
-  useEffect(() => {
-  axios.get('http://localhost:5000/api/movies')
-    .then(response => {
-      // Use .find() and ensure both sides are strings for comparison
-      const foundMovie = response.data.find(m => String(m._id) === String(id));
-      if (foundMovie) {
-        setMovie(foundMovie);
-      } else {
-        console.error("Movie not found in the list");
-      }
-    })
-    .catch(error => console.error("Error fetching movie:", error));
-}, [id]);
-
-  const toggleSeat = (seatNumber) => {
-    if (selectedSeats.includes(seatNumber)) {
-      setSelectedSeats(selectedSeats.filter(seat => seat !== seatNumber));
-    } else {
-      setSelectedSeats([...selectedSeats, seatNumber]);
-    }
+  // --- NEW: SEAT TIER LOGIC ---
+  const getSeatInfo = (num) => {
+    if (num <= 16) return { type: 'Silver', price: 10, color: 'bg-slate-200', active: 'bg-slate-500' };
+    if (num <= 32) return { type: 'Gold', price: 15, color: 'bg-yellow-100', active: 'bg-yellow-600' };
+    return { type: 'Platinum', price: 25, color: 'bg-purple-100', active: 'bg-purple-700' };
   };
 
-const handleBooking = () => {
-  if (selectedSeats.length === 0) {
-    alert("Please select at least one seat!");
-    return;
-  }
-  
-  // Pass ALL data to the Checkout page
-  navigate('/checkout', { 
-    state: { 
-      movie, 
-      selectedSeats, 
-      theater, // Added
-      time,    // Added
-      date,    // Added
-      totalPrice: selectedSeats.length * ticketPrice 
-    } 
-  });
-};
+  // Calculate dynamic total based on selected seat types
+  const totalPrice = selectedSeats.reduce((sum, seat) => sum + getSeatInfo(seat).price, 0);
+
+  useEffect(() => {
+    axios.get('http://localhost:5000/api/movies')
+      .then(response => {
+        const foundMovie = response.data.find(m => String(m._id) === String(id));
+        if (foundMovie) setMovie(foundMovie);
+      })
+      .catch(error => console.error("Error fetching movie:", error));
+  }, [id]);
+
+  const toggleSeat = (seatNumber) => {
+    setSelectedSeats(prev => 
+      prev.includes(seatNumber) ? prev.filter(seat => seat !== seatNumber) : [...prev, seatNumber]
+    );
+  };
+
+  const handleBooking = () => {
+    if (selectedSeats.length === 0) {
+      alert("Please select at least one seat!");
+      return;
+    }
+    navigate('/checkout', { 
+      state: { 
+        movie, 
+        selectedSeats, 
+        theater, 
+        time, 
+        date, 
+        totalPrice // Passing the dynamic calculated price
+      } 
+    });
+  };
 
   if (!movie) return <div className="text-center p-10 text-xl font-bold">Loading Movie Data...</div>;
 
   return (
     <div className="max-w-6xl mx-auto p-8 flex flex-col md:flex-row gap-10">
-      
-      {/* Left Side: Movie Details */}
       <div className="md:w-1/3">
         <img src={movie.posterUrl} alt={movie.title} className="w-full rounded-xl shadow-lg mb-6 object-cover" />
         <h1 className="text-4xl font-bold text-gray-900 mb-2">{movie.title}</h1>
@@ -68,34 +65,40 @@ const handleBooking = () => {
         <p className="text-gray-700 leading-relaxed mb-6">{movie.description}</p>
       </div>
 
-      {/* Right Side: Seat Selection */}
       <div className="md:w-2/3 bg-white p-8 rounded-xl shadow-lg border border-gray-100">
         <h2 className="text-2xl font-bold mb-6 text-center">Select Your Seats</h2>
-        {/* Inside the Seat Selection div in Booking.jsx */}
-<div className="mb-6 text-center bg-gray-50 p-3 rounded-lg border border-dashed border-gray-300">
-  <p className="text-gray-700">
-    <span className="font-bold text-red-600">{theater || "No Theater Selected"}</span> 
-    <span className="mx-2">|</span> 
-    <span>{date || "No Date"}</span> 
-    <span className="mx-2">at</span> 
-    <span className="font-bold text-gray-900">{time || "No Time"}</span>
-  </p>
-</div>              
-        {/* The "Screen" */}
+        
+        <div className="mb-6 text-center bg-gray-50 p-3 rounded-lg border border-dashed border-gray-300">
+          <p className="text-gray-700">
+            <span className="font-bold text-red-600">{theater || "No Theater Selected"}</span> 
+            <span className="mx-2">|</span> 
+            <span>{date || "No Date"}</span> 
+            <span className="mx-2">at</span> 
+            <span className="font-bold text-gray-900">{time || "No Time"}</span>
+          </p>
+        </div>
+
+        {/* Legend */}
+        <div className="flex justify-center gap-4 mb-6 text-[10px] font-bold uppercase">
+          <div className="flex items-center gap-1"><div className="w-3 h-3 bg-slate-200 rounded"></div> Silver $10</div>
+          <div className="flex items-center gap-1"><div className="w-3 h-3 bg-yellow-100 rounded"></div> Gold $15</div>
+          <div className="flex items-center gap-1"><div className="w-3 h-3 bg-purple-100 rounded"></div> Platinum $25</div>
+        </div>
+
         <div className="w-full h-8 bg-gray-300 rounded-t-3xl mb-10 shadow-inner flex items-center justify-center">
            <span className="text-gray-500 text-sm font-bold tracking-widest uppercase">Screen</span>
         </div>
 
-        {/* Seat Grid */}
         <div className="grid grid-cols-8 gap-3 mb-8">
           {totalSeats.map(seat => {
             const isSelected = selectedSeats.includes(seat);
+            const seatInfo = getSeatInfo(seat);
             return (
               <button
                 key={seat}
                 onClick={() => toggleSeat(seat)}
-                className={`h-10 w-10 rounded-t-lg text-xs font-bold transition-colors duration-200 
-                  ${isSelected ? 'bg-red-500 text-white shadow-md transform scale-105' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}
+                className={`h-10 w-10 rounded-t-lg text-xs font-bold transition-all duration-200 
+                  ${isSelected ? `${seatInfo.active} text-white shadow-md scale-105` : `${seatInfo.color} text-gray-600 hover:brightness-95`}`}
               >
                 {seat}
               </button>
@@ -103,11 +106,10 @@ const handleBooking = () => {
           })}
         </div>
 
-        {/* Checkout Section */}
         <div className="border-t pt-6 mt-6 flex justify-between items-center">
           <div>
             <p className="text-gray-600">Selected Seats: <span className="font-bold text-gray-900">{selectedSeats.length}</span></p>
-            <p className="text-xl font-bold text-gray-900">Total: ${selectedSeats.length * ticketPrice}</p>
+            <p className="text-xl font-bold text-gray-900">Total: ${totalPrice}</p>
           </div>
           <button 
             onClick={handleBooking}
@@ -117,7 +119,6 @@ const handleBooking = () => {
           </button>
         </div>
       </div>
-
     </div>
   );
 };

@@ -17,7 +17,8 @@ const Login = () => {
       const response = await axios.post('http://localhost:5000/api/users/login', formData);
       
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('userName', response.data.name || "User"); 
+        localStorage.setItem('userName', response.data.name || "User"); 
+        localStorage.setItem('userId', response.data.userId);
       
       navigate('/'); 
       window.location.reload(); // Refresh to update the Navbar immediately
