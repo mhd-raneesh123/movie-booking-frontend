@@ -6,7 +6,7 @@ const Home = () => {
   const [movies, setMovies] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/movies')
+    axios.get('https://movie-booking-backend-mebh.onrender.com/api/movies')
       .then(response => setMovies(response.data))
       .catch(error => console.error("Error fetching movies:", error));
   }, []);

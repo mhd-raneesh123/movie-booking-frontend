@@ -7,7 +7,7 @@ const Profile = () => {
 
   useEffect(() => {
     if (userId) {
-      axios.get(`http://localhost:5000/api/bookings/user/${userId}`)
+      axios.get(`https://movie-booking-backend-mebh.onrender.com/api/bookings/user/${userId}`)
         .then(res => setBookings(res.data))
         .catch(err => console.error("Error fetching history:", err));
     }

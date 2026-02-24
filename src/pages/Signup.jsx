@@ -15,7 +15,7 @@ const Signup = () => {
     e.preventDefault();
     try {
       // Adjust this URL if your backend route is different (e.g., /api/users)
-      await axios.post('http://localhost:5000/api/users/register', formData);
+      await axios.post('https://movie-booking-backend-mebh.onrender.com/api/users/register', formData);
       navigate('/login'); // Redirect to login on success
     } catch (err) {
       setError(err.response?.data?.message || 'Error signing up');

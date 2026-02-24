@@ -23,7 +23,7 @@ const Booking = () => {
   const totalPrice = selectedSeats.reduce((sum, seat) => sum + getSeatInfo(seat).price, 0);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/movies')
+    axios.get('https://movie-booking-backend-mebh.onrender.com/api/movies')
       .then(response => {
         const foundMovie = response.data.find(m => String(m._id) === String(id));
         if (foundMovie) setMovie(foundMovie);

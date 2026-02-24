@@ -43,7 +43,7 @@ const Checkout = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
       // Save to history
-      await axios.post('http://localhost:5000/api/bookings/save', {
+      await axios.post('https://movie-booking-backend-mebh.onrender.com/api/bookings/save', {
         userId,
         movieTitle: movie?.title,
         theater,
